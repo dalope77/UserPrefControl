@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    <i class="fas fa-map-marker-alt me-3"></i>
+                    Ofertas Cerca de Ti
+                </h1>
+                <p class="lead mb-4">
+                    Descubre las mejores ofertas de negocios locales cuando estés cerca. 
+                    Recibe notificaciones automáticas basadas en tu ubicación.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ url_for('user_map') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-map me-2"></i>Ver Mapa de Ofertas
+                    </a>
+                    {% if not current_user.is_authenticated %}
+                        <a href="{{ url_for('register') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-store me-2"></i>Registrar mi Negocio
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="https://pixabay.com/get/g69c8b1a67797e95de0b5bd79a214e8cdc4c26a2153bb13dd138f250ff52eddab547b20d87acdf33240d1c7d67f5497068014c403a2b4c9d877adc28cd173bf1f_1280.jpg" 
+                     alt="Notificaciones móviles" class="img-fluid rounded shadow" style="max-height: 400px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <!-- Features Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="display-5 fw-bold">¿Cómo Funciona?</h2>
+            <p class="lead text-muted">Conectamos negocios con clientes de manera inteligente</p>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-primary text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-store fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Para Negocios</h5>
+                    <p class="card-text">
+                        Registra tu negocio, crea ofertas atractivas y llega a clientes potenciales 
+                        cuando estén cerca de tu ubicación.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-success text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-map-marker-alt fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Geolocalización</h5>
+                    <p class="card-text">
+                        Utilizamos tu ubicación para mostrarte ofertas relevantes de negocios 
+                        cercanos en tiempo real.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="bg-warning text-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-bell fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Notificaciones</h5>
+                    <p class="card-text">
+                        Recibe alertas automáticas cuando estés cerca de negocios con ofertas 
+                        especiales disponibles.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benefits Section -->
+    <div class="row mb-5">
+        <div class="col-lg-6 mb-4">
+            <img src="https://pixabay.com/get/ga49d3511d0e41d2452bf8ee5d2a04e589f03819647745633025c4feb9f0eed886add76535e6006fc1abbe44d910b71df64bfb9d6a79cdcd36c1e08a43850a3c5_1280.jpg" 
+                 alt="Personas caminando cerca de tiendas" class="img-fluid rounded shadow">
+        </div>
+        <div class="col-lg-6 d-flex align-items-center">
+            <div>
+                <h3 class="fw-bold mb-4">Beneficios para Usuarios</h3>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-success me-3"></i>
+                    <span>Descubre ofertas exclusivas en tu área</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-success me-3"></i>
+                    <span>Ahorra dinero en compras locales</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-success me-3"></i>
+                    <span>Notificaciones inteligentes y oportunas</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-success me-3"></i>
+                    <span>Apoya a negocios de tu comunidad</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 order-lg-2 mb-4">
+            <img src="https://pixabay.com/get/g4c7da82c6a012d6b2992d4115a232475dfa17618ed2b771d4294b98e95d87fdd897bbb6f9262a6de049f1ad42686985187075662d5046771cdda235de9fe6964_1280.jpg" 
+                 alt="Fachada de negocio local" class="img-fluid rounded shadow">
+        </div>
+        <div class="col-lg-6 order-lg-1 d-flex align-items-center">
+            <div>
+                <h3 class="fw-bold mb-4">Beneficios para Negocios</h3>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-primary me-3"></i>
+                    <span>Aumenta la visibilidad de tu negocio</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-primary me-3"></i>
+                    <span>Atrae clientes en el momento perfecto</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-primary me-3"></i>
+                    <span>Gestión fácil de ofertas y promociones</span>
+                </div>
+                <div class="mb-3">
+                    <i class="fas fa-check-circle text-primary me-3"></i>
+                    <span>Marketing geolocalizado efectivo</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="text-center mt-5 py-5 bg-light rounded">
+        <h3 class="fw-bold mb-4">¿Listo para Comenzar?</h3>
+        <p class="lead mb-4">Únete a nuestra plataforma y transforma la manera de conectar con tu comunidad local</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="{{ url_for('user_map') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-map me-2"></i>Explorar Ofertas
+            </a>
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-store me-2"></i>Registrar Negocio
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
