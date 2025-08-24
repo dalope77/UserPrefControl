@@ -1,0 +1,483 @@
+# 🚀 **Sistema de Preferencias de Usuario - Implementación Completa**
+
+## 📱 **Onboarding de Preferencias - Paso a Paso**
+
+### **1. Pantalla de Bienvenida**
+```kotlin
+// WelcomeActivity.kt
+class WelcomeActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_welcome)
+        
+        btnGetStarted.setOnClickListener {
+            startActivity(Intent(this, InterestSelectionActivity::class.java))
+        }
+    }
+}
+```
+
+### **2. Selección de Categorías de Interés**
+```kotlin
+// InterestSelectionActivity.kt
+class InterestSelectionActivity : AppCompatActivity() {
+    private val selectedInterests = mutableSetOf<InterestCategory>()
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_interest_selection)
+        
+        setupInterestGrid()
+        setupContinueButton()
+    }
+    
+    private fun setupInterestGrid() {
+        val interests = listOf(
+            InterestItem(R.drawable.ic_food, "Comida & Café", InterestCategory.FOOD_COFFEE),
+            InterestItem(R.drawable.ic_fashion, "Moda", InterestCategory.FASHION_APPAREL),
+            InterestItem(R.drawable.ic_tech, "Tecnología", InterestCategory.TECH_ELECTRONICS),
+            InterestItem(R.drawable.ic_beauty, "Belleza", InterestCategory.HEALTH_BEAUTY),
+            InterestItem(R.drawable.ic_grocery, "Supermercado", InterestCategory.GROCERY),
+            InterestItem(R.drawable.ic_home, "Hogar", InterestCategory.HOME_DECOR),
+            InterestItem(R.drawable.ic_entertainment, "Entretenimiento", InterestCategory.ENTERTAINMENT),
+            InterestItem(R.drawable.ic_services, "Servicios", InterestCategory.SERVICES),
+            InterestItem(R.drawable.ic_sports, "Deportes", InterestCategory.SPORTS_FITNESS),
+            InterestItem(R.drawable.ic_books, "Libros", InterestCategory.BOOKS_STATIONERY)
+        )
+        
+        val adapter = InterestAdapter(interests) { interest, isSelected ->
+            if (isSelected) selectedInterests.add(interest.category)
+            else selectedInterests.remove(interest.category)
+            updateContinueButton()
+        }
+        
+        recyclerViewInterests.adapter = adapter
+        recyclerViewInterests.layoutManager = GridLayoutManager(this, 3)
+    }
+    
+    private fun setupContinueButton() {
+        btnContinue.setOnClickListener {
+            if (selectedInterests.size >= 2) {
+                UserPreferencesManager.saveInterests(selectedInterests)
+                startActivity(Intent(this, DiscountPreferenceActivity::class.java))
+            } else {
+                showToast("Selecciona al menos 2 categorías")
+            }
+        }
+    }
+}
+```
+
+### **3. Preferencia de Descuento Mínimo**
+```kotlin
+// DiscountPreferenceActivity.kt
+class DiscountPreferenceActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_discount_preference)
+        
+        sliderDiscount.setLabelFormatter { value ->
+            when (value.toInt()) {
+                5 -> "5% (Explorador)"
+                15 -> "15% (Moderado)"
+                30 -> "30% (Ahorrador)"
+                else -> "$value%"
+            }
+        }
+        
+        sliderDiscount.addOnChangeListener { slider, value, fromUser ->
+            updateDiscountDescription(value.toInt())
+        }
+        
+        btnContinue.setOnClickListener {
+            val minDiscount = sliderDiscount.value.toInt()
+            UserPreferencesManager.saveMinDiscount(minDiscount)
+            startActivity(Intent(this, DistancePreferenceActivity::class.java))
+        }
+    }
+    
+    private fun updateDiscountDescription(discount: Int) {
+        val description = when {
+            discount <= 10 -> "Verás muchas ofertas, algunas con descuentos pequeños"
+            discount <= 20 -> "Balance perfecto entre variedad y ahorro"
+            else -> "Solo las mejores ofertas con grandes descuentos"
+        }
+        textDiscountDescription.text = description
+    }
+}
+```
+
+### **4. Preferencia de Distancia**
+```kotlin
+// DistancePreferenceActivity.kt
+class DistancePreferenceActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_distance_preference)
+        
+        val distanceOptions = listOf(
+            DistanceOption(500, "500m (Caminando)", "5-10 min caminando"),
+            DistanceOption(1000, "1km (Cerca)", "10-15 min caminando"),
+            DistanceOption(3000, "3km (Ciudad)", "Incluye transporte corto"),
+            DistanceOption(5000, "5km (Explorar)", "Toda la ciudad")
+        )
+        
+        val adapter = DistanceAdapter(distanceOptions) { distance ->
+            UserPreferencesManager.saveMaxDistance(distance.meters)
+            completeOnboarding()
+        }
+        
+        recyclerViewDistances.adapter = adapter
+        recyclerViewDistances.layoutManager = LinearLayoutManager(this)
+    }
+    
+    private fun completeOnboarding() {
+        UserPreferencesManager.setOnboardingCompleted(true)
+        startActivity(Intent(this, MainActivity::class.java))
+        finish()
+    }
+}
+```
+
+## 🧠 **Sistema de Matching Inteligente**
+
+### **Clase de Matching Algorithm**
+```kotlin
+// OfferMatchingEngine.kt
+object OfferMatchingEngine {
+    
+    fun calculateMatchScore(offer: Offer, user: User, userLocation: Location): Double {
+        val categoryScore = calculateCategoryScore(offer, user.preferences)
+        val discountScore = calculateDiscountScore(offer, user.preferences)
+        val distanceScore = calculateDistanceScore(offer, userLocation, user.preferences)
+        val timeScore = calculateTimeScore(offer)
+        val personalizationScore = calculatePersonalizationScore(offer, user)
+        
+        return categoryScore * discountScore * distanceScore * timeScore * personalizationScore
+    }
+    
+    private fun calculateCategoryScore(offer: Offer, preferences: UserPreferences): Double {
+        return if (offer.category in preferences.interests) {
+            2.0 // Interés explícito
+        } else if (offer.category in preferences.implicitInterests) {
+            1.5 // Interés inferido
+        } else {
+            0.3 // Descubrimiento
+        }
+    }
+    
+    private fun calculateDiscountScore(offer: Offer, preferences: UserPreferences): Double {
+        val minDiscount = preferences.minDiscount
+        return if (offer.discountPercentage >= minDiscount) {
+            (offer.discountPercentage / minDiscount.toDouble()).coerceAtMost(2.0)
+        } else {
+            0.2 // Descuento insuficiente
+        }
+    }
+    
+    private fun calculateDistanceScore(offer: Offer, userLocation: Location, preferences: UserPreferences): Double {
+        val distance = calculateDistance(userLocation, offer.location)
+        val maxDistance = preferences.maxDistance
+        
+        return when {
+            distance <= maxDistance * 0.3 -> 2.0 // Muy cerca
+            distance <= maxDistance -> 1.0 // Dentro del radio
+            distance <= maxDistance * 1.5 -> 0.5 // Un poco fuera
+            else -> 0.1 // Muy lejos
+        }
+    }
+    
+    private fun calculateTimeScore(offer: Offer): Double {
+        val timeLeft = offer.expirationTime - System.currentTimeMillis()
+        val timeRatio = timeLeft / (24 * 60 * 60 * 1000.0) // Días restantes
+        
+        return when {
+            timeRatio < 0.1 -> 1.8 // Expira en menos de 2.4 horas
+            timeRatio < 0.5 -> 1.3 // Expira en menos de 12 horas
+            timeRatio < 1.0 -> 1.1 // Expira en menos de 1 día
+            else -> 1.0
+        }
+    }
+    
+    private fun calculatePersonalizationScore(offer: Offer, user: User): Double {
+        var score = 1.0
+        
+        // Boost para comercios favoritos
+        if (offer.storeId in user.favoriteStores) {
+            score *= 1.5
+        }
+        
+        // Penalizar comercios excluidos
+        if (offer.storeId in user.excludedStores) {
+            score *= 0.1
+        }
+        
+        // Boost para comercios nuevos no visitados
+        if (offer.storeId !in user.visitedStores) {
+            score *= 1.3
+        }
+        
+        return score
+    }
+}
+```
+
+## 📊 **Sistema de Recomendaciones Personalizadas**
+
+### **OfferRepository con Filtros**
+```kotlin
+// OfferRepository.kt
+class OfferRepository @Inject constructor(
+    private val geoPackageManager: GeoPackageManager,
+    private val locationProvider: LocationProvider
+) {
+    
+    suspend fun getPersonalizedOffers(user: User): List<Offer> {
+        val userLocation = locationProvider.getCurrentLocation()
+        val allOffers = getActiveOffersFromGeoPackage()
+        
+        return allOffers
+            .map { offer ->
+                val score = OfferMatchingEngine.calculateMatchScore(offer, user, userLocation)
+                OfferWithScore(offer, score)
+            }
+            .filter { it.score > 0.5 } // Umbral mínimo
+            .sortedByDescending { it.score }
+            .take(20) // Límite para performance
+            .map { it.offer }
+    }
+    
+    suspend fun getOffersForCategory(category: InterestCategory, user: User): List<Offer> {
+        val userLocation = locationProvider.getCurrentLocation()
+        
+        return getActiveOffersFromGeoPackage()
+            .filter { it.category == category }
+            .map { offer ->
+                val score = OfferMatchingEngine.calculateMatchScore(offer, user, userLocation)
+                OfferWithScore(offer, score)
+            }
+            .sortedByDescending { it.score }
+            .map { it.offer }
+    }
+    
+    private suspend fun getActiveOffersFromGeoPackage(): List<Offer> {
+        return withContext(Dispatchers.IO) {
+            // Implementación específica de lectura desde GeoPackage
+            geoPackageManager.getOffersWithinArea(
+                boundingBox = calculateBoundingBox(locationProvider.getLastKnownLocation()),
+                maxResults = 1000
+            ).filter { !it.isExpired() }
+        }
+    }
+}
+```
+
+## 🔔 **Sistema de Notificaciones Inteligentes**
+
+### **NotificationScheduler.kt**
+```kotlin
+// NotificationScheduler.kt
+class NotificationScheduler @Inject constructor(
+    private val offerRepository: OfferRepository,
+    private val userRepository: UserRepository,
+    private val notificationManager: NotificationManager
+) {
+    
+    suspend fun scheduleDailyNotifications() {
+        val user = userRepository.getCurrentUser()
+        val personalizedOffers = offerRepository.getPersonalizedOffers(user)
+        
+        val bestOffers = personalizedOffers
+            .filter { it.matchScore > 1.5 }
+            .sortedByDescending { it.matchScore }
+            .take(2) // Máximo 2 notificaciones por día
+        
+        bestOffers.forEach { offer ->
+            if (shouldNotifyForOffer(offer, user)) {
+                scheduleNotification(offer, user)
+            }
+        }
+    }
+    
+    private fun shouldNotifyForOffer(offer: Offer, user: User): Boolean {
+        // No notificar si ya se notificó hoy
+        if (user.lastNotificationTime[offer.id]?.isToday() == true) {
+            return false
+        }
+        
+        // No notificar si el usuario ya redimió esta oferta
+        if (offer.id in user.redeemedOffers) {
+            return false
+        }
+        
+        // Verificar preferencias de timing del usuario
+        return isGoodTimeForNotification(offer, user)
+    }
+    
+    private fun isGoodTimeForNotification(offer: Offer, user: User): Boolean {
+        val currentHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        val category = offer.category
+        
+        return when (category) {
+            InterestCategory.FOOD_COFFEE -> currentHour in 7..9 || currentHour in 11..13 || currentHour in 17..19
+            InterestCategory.FASHION_APPAREL -> currentHour in 10..20
+            InterestCategory.ENTERTAINMENT -> currentHour in 16..22
+            else -> currentHour in 9..21
+        }
+    }
+    
+    private fun scheduleNotification(offer: Offer, user: User) {
+        val notification = createNotification(offer)
+        notificationManager.showNotification(notification)
+        
+        // Actualizar historial de notificaciones
+        userRepository.updateNotificationHistory(user.id, offer.id)
+    }
+}
+```
+
+## 💾 **Gestión de Preferencias de Usuario**
+
+### **UserPreferencesManager.kt**
+```kotlin
+// UserPreferencesManager.kt
+object UserPreferencesManager {
+    
+    private const val PREFS_NAME = "user_preferences"
+    private const val KEY_INTERESTS = "interests"
+    private const val KEY_MIN_DISCOUNT = "min_discount"
+    private const val KEY_MAX_DISTANCE = "max_distance"
+    private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
+    
+    fun saveInterests(interests: Set<InterestCategory>) {
+        val prefs = getPreferences()
+        prefs.edit().putStringSet(KEY_INTERESTS, interests.map { it.name }.toSet()).apply()
+    }
+    
+    fun getInterests(): Set<InterestCategory> {
+        val prefs = getPreferences()
+        return prefs.getStringSet(KEY_INTERESTS, emptySet())?.map { 
+            InterestCategory.valueOf(it) 
+        }?.toSet() ?: emptySet()
+    }
+    
+    fun saveMinDiscount(discount: Int) {
+        getPreferences().edit().putInt(KEY_MIN_DISCOUNT, discount).apply()
+    }
+    
+    fun getMinDiscount(): Int {
+        return getPreferences().getInt(KEY_MIN_DISCOUNT, 15) // Default 15%
+    }
+    
+    fun saveMaxDistance(meters: Int) {
+        getPreferences().edit().putInt(KEY_MAX_DISTANCE, meters).apply()
+    }
+    
+    fun getMaxDistance(): Int {
+        return getPreferences().getInt(KEY_MAX_DISTANCE, 1000) // Default 1km
+    }
+    
+    fun setOnboardingCompleted(completed: Boolean) {
+        getPreferences().edit().putBoolean(KEY_ONBOARDING_COMPLETE, completed).apply()
+    }
+    
+    fun isOnboardingCompleted(): Boolean {
+        return getPreferences().getBoolean(KEY_ONBOARDING_COMPLETE, false)
+    }
+    
+    private fun getPreferences(): SharedPreferences {
+        return GeoOfertasApp.context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+}
+```
+
+## 🎨 **Layout XML Ejemplo (interest_selection.xml)**
+
+```xml
+<!-- activity_interest_selection.xml -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/textTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="¿Qué te interesa?"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:id="@+id/textSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selecciona al menos 2 categorías para personalizar tus ofertas"
+            android:textSize="16sp"
+            android:layout_marginBottom="32dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewInterests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"/>
+
+        <Button
+            android:id="@+id/btnContinue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Continuar"
+            android:enabled="false"
+            android:backgroundTint="@color/colorPrimary"/>
+
+    </LinearLayout>
+</ScrollView>
+```
+
+## 🚀 **Integración con Main Activity**
+
+```kotlin
+// MainActivity.kt
+class MainActivity : AppCompatActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Verificar si el onboarding está completo
+        if (!UserPreferencesManager.isOnboardingCompleted()) {
+            startActivity(Intent(this, WelcomeActivity::class.java))
+            finish()
+            return
+        }
+        
+        setContentView(R.layout.activity_main)
+        loadPersonalizedOffers()
+    }
+    
+    private fun loadPersonalizedOffers() {
+        lifecycleScope.launch {
+            val user = userRepository.getUserWithPreferences()
+            val offers = offerRepository.getPersonalizedOffers(user)
+            
+            // Mostrar ofertas en UI
+            displayOffers(offers)
+        }
+    }
+}
+```
+
+Este sistema completo permite:
+
+1. **Onboarding guiado** de preferencias
+2. **Matching inteligente** con scoring multi-factor
+3. **Notificaciones contextuales** y no spam
+4. **Recomendaciones hyper-personalizadas**
+5. **Respeto total** por las preferencias del usuario
+
+**¡El usuario solo ve lo que realmente le interesa!** 🎯
