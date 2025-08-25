@@ -106,7 +106,7 @@ def create_offer():
 @app.route('/edit_offer/<offer_id>', methods=['POST'])
 @login_required
 def edit_offer(offer_id):
-    offer = Offer.get(offer_id)
+    offer = Offer.query.get(offer_id)
     if not offer or offer.business_id != current_user.id:
         flash('Oferta no encontrada.', 'error')
         return redirect(url_for('dashboard'))
@@ -138,7 +138,7 @@ def edit_offer(offer_id):
 @app.route('/delete_offer/<offer_id>')
 @login_required
 def delete_offer(offer_id):
-    offer = Offer.get(offer_id)
+    offer = Offer.query.get(offer_id)
     if not offer or offer.business_id != current_user.id:
         flash('Oferta no encontrada.', 'error')
         return redirect(url_for('dashboard'))
@@ -193,19 +193,19 @@ def api_businesses():
     try:
         businesses_data = []
         from app import businesses as all_businesses
+        businesses = [b for b in all_businesses.values() if b.latitude != 0 and b.longitude != 0]
         
-        for business in all_businesses.values():
-            if business.latitude != 0 and business.longitude != 0:
-                active_offers = [offer for offer in business.get_offers() if offer.is_active]
-                businesses_data.append({
-                    'id': business.id,
-                    'name': business.name,
-                    'address': business.address,
-                    'phone': business.phone,
-                    'latitude': business.latitude,
-                    'longitude': business.longitude,
-                    'offers_count': len(active_offers)
-                })
+        for business in businesses:
+            active_offers = [offer for offer in business.get_offers() if offer.is_active]
+            businesses_data.append({
+                'id': business.id,
+                'name': business.name,
+                'address': business.address,
+                'phone': business.phone,
+                'latitude': business.latitude,
+                'longitude': business.longitude,
+                'offers_count': len(active_offers)
+            })
         
         return jsonify({'businesses': businesses_data})
     

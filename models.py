@@ -18,7 +18,29 @@ class Business(UserMixin):
     
     @staticmethod
     def create(email, name, password, phone='', address='', latitude=0.0, longitude=0.0):
-        from app import business_counter, businesses
+        from app import business_counter, businesses, database_available
+        
+        if database_available:
+            try:
+                from app import db
+                from models_db import DBBusiness
+                password_hash = generate_password_hash(password)
+                business = DBBusiness(
+                    email=email,
+                    name=name,
+                    password_hash=password_hash,
+                    phone=phone,
+                    address=address,
+                    latitude=float(latitude),
+                    longitude=float(longitude)
+                )
+                db.session.add(business)
+                db.session.commit()
+                return business
+            except Exception as e:
+                pass  # Fall back to in-memory
+        
+        # In-memory storage
         global business_counter
         business_counter += 1
         
@@ -57,7 +79,27 @@ class Offer:
     
     @staticmethod
     def create(business_id, title, description, discount_percentage, valid_until):
-        from app import offer_counter, offers
+        from app import offer_counter, offers, database_available
+        
+        if database_available:
+            try:
+                from app import db
+                from models_db import DBOffer
+                offer = DBOffer(
+                    business_id=business_id,
+                    title=title,
+                    description=description,
+                    discount_percentage=int(discount_percentage),
+                    valid_until=valid_until,
+                    is_active=True
+                )
+                db.session.add(offer)
+                db.session.commit()
+                return offer
+            except Exception as e:
+                pass  # Fall back to in-memory
+        
+        # In-memory storage
         global offer_counter
         offer_counter += 1
         
