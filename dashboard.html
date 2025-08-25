@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Control - {{ current_user.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Business Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h1 class="mb-2">
+                                <i class="fas fa-store me-3"></i>{{ current_user.name }}
+                            </h1>
+                            <p class="mb-1">
+                                <i class="fas fa-envelope me-2"></i>{{ current_user.email }}
+                            </p>
+                            {% if current_user.phone %}
+                            <p class="mb-1">
+                                <i class="fas fa-phone me-2"></i>{{ current_user.phone }}
+                            </p>
+                            {% endif %}
+                            {% if current_user.address %}
+                            <p class="mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>{{ current_user.address }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="h2 mb-0">{{ offers|length }}</div>
+                            <small>Ofertas Activas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <button class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#createOfferModal">
+                <i class="fas fa-plus me-2"></i>Crear Nueva Oferta
+            </button>
+        </div>
+    </div>
+
+    <!-- Offers List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tags me-2"></i>Mis Ofertas
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if offers %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Descuento</th>
+                                        <th>Válida Hasta</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for offer in offers %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ offer.title }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ offer.description[:50] }}{% if offer.description|length > 50 %}...{% endif %}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success fs-6">{{ offer.discount_percentage }}% OFF</span>
+                                        </td>
+                                        <td>{{ offer.valid_until }}</td>
+                                        <td>
+                                            {% if offer.is_active %}
+                                                <span class="badge bg-success">Activa</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactiva</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" 
+                                                    onclick="editOffer('{{ offer.id }}', '{{ offer.title }}', '{{ offer.description }}', {{ offer.discount_percentage }}, '{{ offer.valid_until }}', {{ offer.is_active|lower }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="{{ url_for('delete_offer', offer_id=offer.id) }}" 
+                                               class="btn btn-sm btn-outline-danger"
+                                               onclick="return confirm('¿Estás seguro de que quieres eliminar esta oferta?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No tienes ofertas creadas</h5>
+                            <p class="text-muted">Crea tu primera oferta para comenzar a atraer clientes</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createOfferModal">
+                                <i class="fas fa-plus me-2"></i>Crear Primera Oferta
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Offer Modal -->
+<div class="modal fade" id="createOfferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Crear Nueva Oferta
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('create_offer') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título de la Oferta *</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descripción *</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="discount_percentage" class="form-label">Porcentaje de Descuento *</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="discount_percentage" name="discount_percentage" 
+                                   min="1" max="90" required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="valid_until" class="form-label">Válida Hasta *</label>
+                        <input type="date" class="form-control" id="valid_until" name="valid_until" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Crear Oferta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Offer Modal -->
+<div class="modal fade" id="editOfferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Oferta
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editOfferForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_title" class="form-label">Título de la Oferta *</label>
+                        <input type="text" class="form-control" id="edit_title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Descripción *</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_discount_percentage" class="form-label">Porcentaje de Descuento *</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="edit_discount_percentage" name="discount_percentage" 
+                                   min="1" max="90" required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_valid_until" class="form-label">Válida Hasta *</label>
+                        <input type="date" class="form-control" id="edit_valid_until" name="valid_until" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active">
+                            <label class="form-check-label" for="edit_is_active">
+                                Oferta Activa
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set minimum date to today for new offers
+document.getElementById('valid_until').min = new Date().toISOString().split('T')[0];
+document.getElementById('edit_valid_until').min = new Date().toISOString().split('T')[0];
+
+function editOffer(id, title, description, discount, validUntil, isActive) {
+    // Populate edit form
+    document.getElementById('edit_title').value = title;
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_discount_percentage').value = discount;
+    document.getElementById('edit_valid_until').value = validUntil;
+    document.getElementById('edit_is_active').checked = isActive;
+    
+    // Set form action
+    document.getElementById('editOfferForm').action = '/edit_offer/' + id;
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('editOfferModal')).show();
+}
+</script>
+{% endblock %}
