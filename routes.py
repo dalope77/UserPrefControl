@@ -26,7 +26,8 @@ def register():
             return render_template('register.html')
         
         # Check if business already exists
-        if Business.get_by_email(email):
+        existing_business = Business.get_by_email(email)
+        if existing_business:
             flash('Ya existe un negocio registrado con este email.', 'error')
             return render_template('register.html')
         
@@ -155,7 +156,7 @@ def api_nearby_offers():
     try:
         latitude = float(request.args.get('lat', 0))
         longitude = float(request.args.get('lng', 0))
-        radius = float(request.args.get('radius', 1000))  # Default 1km radius
+        radius = int(float(request.args.get('radius', 1000)))  # Default 1km radius
         
         if latitude == 0 or longitude == 0:
             return jsonify({'error': 'Ubicación inválida'}), 400
@@ -191,9 +192,9 @@ def api_nearby_offers():
 def api_businesses():
     try:
         businesses_data = []
-        from app import businesses
+        from app import businesses as all_businesses
         
-        for business in businesses.values():
+        for business in all_businesses.values():
             if business.latitude != 0 and business.longitude != 0:
                 active_offers = [offer for offer in business.get_offers() if offer.is_active]
                 businesses_data.append({

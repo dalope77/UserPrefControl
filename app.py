@@ -15,7 +15,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
 
-# In-memory storage for businesses and offers
+# In-memory storage for businesses and offers (temporary, until Supabase is properly configured)
 businesses = {}
 offers = {}
 offer_counter = 0
@@ -28,6 +28,3 @@ def load_user(user_id):
 
 # Import routes after app initialization
 from routes import *
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
